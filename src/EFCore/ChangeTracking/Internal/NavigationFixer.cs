@@ -1197,10 +1197,6 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking.Internal
             InternalEntityEntry? principalEntry,
             IForeignKey foreignKey)
         {
-            var principalProperties = foreignKey.PrincipalKey.Properties;
-            var dependentProperties = foreignKey.Properties;
-            var hasOnlyKeyProperties = true;
-
             var currentPrincipal = dependentEntry.StateManager.FindPrincipal(dependentEntry, foreignKey);
             if (currentPrincipal != null
                 && currentPrincipal != principalEntry)
@@ -1208,10 +1204,13 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking.Internal
                 return;
             }
 
+            var hasOnlyKeyProperties = true;
+            foreignKey.GetPropertiesWithMinimalOverlap(out var dependentProperties, out var principalProperties);
+            
             if (principalEntry != null
                 && principalEntry.EntityState != EntityState.Detached)
             {
-                for (var i = 0; i < foreignKey.Properties.Count; i++)
+                for (var i = 0; i < dependentProperties.Count; i++)
                 {
                     if (!PrincipalValueEqualsDependentValue(
                         principalProperties[i],
@@ -1228,7 +1227,7 @@ namespace Microsoft.EntityFrameworkCore.ChangeTracking.Internal
                 }
             }
 
-            for (var i = 0; i < foreignKey.Properties.Count; i++)
+            for (var i = 0; i < dependentProperties.Count; i++)
             {
                 if (!dependentProperties[i].IsKey())
                 {
